@@ -25,43 +25,16 @@ function htmlToFalco(html) {
     }
 
     /**
-     * Maps HTML attributes to Falco atributes.
-     * @param {object} attribs
+     * Maps HTML attributes to Falco attributes.
+     * @param {object} attributes
      * @returns {string[]}
      */
-    function mapAttributes(attribs) {
+    function mapAttributes(attributes) {
         const props = [];
-        for (const [key, value] of Object.entries(attribs)) {
-            switch (key) {
-                case 'class':
-                    props.push(`Attr.class' "${escapeString(value)}"`);
-                    break;
-                case 'id':
-                    props.push(`Attr.id "${escapeString(value)}"`);
-                    break;
-                case 'style':
-                    // Simple style parser: assumes styles are in "key: value;" format
-                    const styles = value.split(';').map(s => s.trim()).filter(s => s);
-                    const styleProps = styles.map(s => {
-                        const [k, v] = s.split(':').map(part => part.trim());
-                        // Convert CSS property to camelCase if necessary
-                        const camelCaseKey = k.replace(/-([a-z])/g, g => g[1].toUpperCase());
-                        return `style.${camelCaseKey} "${escapeString(v)}"`
-                    });
-                    if (styleProps.length > 0) {
-                        props.push(`Attr.style [ ${styleProps.join('; ')} ]`);
-                    }
-                    break;
-                // Add more attribute mappings as needed
+        for (const [key, value] of Object.entries(attributes)) {
+            switch (key) {                
                 default:
-                    // Handle data-* attributes or others
-                    if (key.startsWith('data-')) {
-                        const dataKey = key.slice(5);
-                        props.push(`Attr.create "data-${dataKey}" "${escapeString(value)}"`);
-                    } else {
-                        // Generic attribute
-                        props.push(`Attr.create "${key}" "${escapeString(value)}"`);
-                    }
+                    props.push(`_${key}_ "${escapeString(value)}"`);
                     break;
             }
         }
@@ -71,62 +44,44 @@ function htmlToFalco(html) {
     /**
      * Processes a DOM node and returns its F# representation.
      * @param {object} node
+     * @param {number} nestedIndentLevel
      * @returns {string}
      */
-    function processNode(node) {
+    function processNode(node, nestedIndentLevel) {
         if (node.type === 'text') {
             const text = node.data.trim();
             if (text === '') return '';
-            return `Text.raw "${escapeString(text)}"`;
-        } else if (node.type === 'tag') {
-            const tagName = node.name;
-            const falcoTag = `Elem.${tagName}`;
+            return `_text "${escapeString(text)}"`;
+        } else if (node.type === 'tag') {            
+            let element = `_${node.name}`;
 
-            const attribs = node.attribs || {};
-            const props = mapAttributes(attribs);
+            const attributes = mapAttributes(node.attribs || {});
 
-            const children = node.children.map(child => processNode(child)).filter(child => child !== '').map(child => {
-                // Increase indentation for children
+            const children = node.children.map(child => processNode(child, nestedIndentLevel + 1)).filter(child => child !== '').map(child => {                            
                 indentLevel++;
-                const indentedChild = ' '.repeat(indentLevel * indentSize) + child;
+                const indentedChild = ' '.repeat(nestedIndentLevel * indentLevel * indentSize) + child;
                 indentLevel--;
                 return indentedChild;
             });
 
-            let elementAlt = falcoTag;
-
-            if (props.length > 0) {
-                indentLevel++;
-                const propsString = props.map(prop => {
-                    const indentedProp = ' '.repeat(indentLevel * indentSize) + prop;
-                    return indentedProp;
-                }).join('\n');
-                elementAlt += ' [';
-                elementAlt += `\n${propsString}`;
-                elementAlt += '\n]';
-                indentLevel--;
+            if (attributes.length > 0) {
+                element += ` [ ${attributes.join('; ')} ]`;
             } else {
-                elementAlt += ' []';
+                element += ' []';
             }
 
             if (children.length > 0) {
-                if (props.length > 0) {
-                    //elementAlt += '\n';
-                }
-                const childrenString = children.join('\n');
-                elementAlt += ' [';
-                //elementAlt += childrenString;
-                elementAlt += `\n${childrenString}`;
-                elementAlt += '\n]';
+                indentLevel++;         
+                element += ' [';                    
+                element += ' '.repeat(nestedIndentLevel * indentLevel * indentSize) + `\n${children.join('\n')} ]`;  
+                indentLevel--;
             } else {
-                elementAlt += ' []';
+                element += ' []';
             }
 
-            elementAlt += '\n' + ' '.repeat(indentLevel * indentSize);
-
-            return elementAlt;
+            return element;
         }
-        // Handle other node types if necessary
+        
         return '';
     }
 
@@ -136,7 +91,7 @@ function htmlToFalco(html) {
      * @returns {string}
      */
     function processDOM(dom) {
-        return dom.children.map(child => processNode(child)).filter(node => node !== '').join('\n');
+        return dom.children.map(child => processNode(child, 1)).filter(node => node !== '').join('\n');
     }
 
     return processDOM(dom);

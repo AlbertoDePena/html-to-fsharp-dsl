@@ -10,6 +10,15 @@ function htmlToFalco(html) {
     const indentSize = 4;
 
     /**
+     * Converts kebab-case to camelCase (e.g., http-equiv -> httpEquiv)
+     * @param {string} str
+     * @returns {string}
+     */
+    function toCamelCase(str) {
+        return str.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
+    }
+
+    /**
      * Escapes special characters in strings.
      * @param {string} str
      * @returns {string}
@@ -37,13 +46,15 @@ function htmlToFalco(html) {
             'reversed', 'selected'
         ]);
         for (const [key, value] of Object.entries(attributes)) {
+            // Convert kebab-case to camelCase for attribute keys with hyphens
+            const attrKey = key.includes('-') ? toCamelCase(key) : key;
             if (booleanAttrs.has(key)) {
-                props.push(`_${key}_`);
+                props.push(`_${attrKey}_`);
             } else if (/^on[a-z]+/.test(key)) {
                 // Explicitly handle event attributes (e.g., onclick, onchange)
-                props.push(`_${key}_ "${escapeString(value)}"`);
+                props.push(`_${attrKey}_ "${escapeString(value)}"`);
             } else {
-                props.push(`_${key}_ "${escapeString(value)}"`);
+                props.push(`_${attrKey}_ "${escapeString(value)}"`);
             }
         }
         return props;

@@ -9,7 +9,6 @@ function htmlToFalco(html) {
     const dom = htmlparser2.parseDocument(html);
 
     const indentSize = 4;
-    let indentLevel = 0;
 
     /**
      * Escapes special characters in strings.
@@ -49,10 +48,10 @@ function htmlToFalco(html) {
     /**
      * Processes a DOM node and returns its F# representation.
      * @param {object} node
-     * @param {number} nestedIndentLevel
+     * @param {number} indentLevel
      * @returns {string}
      */
-    function processNode(node, nestedIndentLevel) {
+    function processNode(node, indentLevel) {
         if (node.type === 'text') {
             const text = node.data.trim();
             if (text === '') return '';
@@ -62,9 +61,9 @@ function htmlToFalco(html) {
 
             const attributes = mapAttributes(node.attribs || {});
 
-            const children = node.children.map(child => processNode(child, nestedIndentLevel + 1)).filter(child => child !== '').map(child => {                            
+            const children = node.children.map(child => processNode(child, indentLevel + 1)).filter(child => child !== '').map(child => {                            
                 indentLevel++;
-                const indentedChild = ' '.repeat(nestedIndentLevel * indentLevel * indentSize) + child;
+                const indentedChild = ' '.repeat((indentLevel + 1) * indentSize) + child;
                 indentLevel--;
                 return indentedChild;
             });
@@ -78,7 +77,7 @@ function htmlToFalco(html) {
             if (children.length > 0) {
                 indentLevel++;         
                 element += ' [';                    
-                element += ' '.repeat(nestedIndentLevel * indentLevel * indentSize) + `\n${children.join('\n')} ]`;  
+                element += ' '.repeat(indentLevel * indentSize) + `\n${children.join('\n')} ]`;  
                 indentLevel--;
             } else {
                 element += ' []';
@@ -102,6 +101,15 @@ function htmlToFalco(html) {
     return processDOM(dom);
 }
 
-document.getElementById('source').addEventListener('change', evt => {
-    document.getElementById('target').innerHTML = htmlToFalco(evt.target.value);
+const sourceElement = document.getElementById('source');
+if (!sourceElement) {
+    return;
+}
+
+sourceElement.addEventListener('change', evt => {
+    const targetElement = document.getElementById('target');
+    if (!targetElement) {
+        return;
+    }
+    targetElement.innerHTML = htmlToFalco(evt.target.value);
 });

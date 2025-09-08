@@ -7,7 +7,6 @@ const htmlparser2 = require('htmlparser2');
  */
 function htmlToFalco(html) {
     const dom = htmlparser2.parseDocument(html);
-
     const indentSize = 4;
 
     /**
@@ -100,7 +99,7 @@ function htmlToFalco(html) {
      * @returns {string}
      */
     function processDOM(dom) {
-        return dom.children.map(child => processNode(child, 1)).filter(node => node !== '').join('\n');
+        return dom.children.map(child => processNode(child, 0)).filter(node => node !== '').join('\n');
     }
 
     return processDOM(dom);

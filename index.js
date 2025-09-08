@@ -30,16 +30,18 @@ function htmlToFalco(html) {
      */
     function mapAttributes(attributes) {
         const props = [];
+        // List of boolean attributes per HTML spec and Falco.Markup
+        const booleanAttrs = new Set([
+            'allowfullscreen', 'async', 'autofocus', 'autoplay', 'checked', 'controls', 'default',
+            'defer', 'disabled', 'formnovalidate', 'hidden', 'ismap', 'itemscope', 'loop',
+            'multiple', 'muted', 'nomodule', 'novalidate', 'open', 'readonly', 'required',
+            'reversed', 'selected'
+        ]);
         for (const [key, value] of Object.entries(attributes)) {
-            switch (key) {  
-                case 'required':  
-                case 'disabled': 
-                case 'readonly':             
-                    props.push(`_${key}_`);
-                    break
-                default:
-                    props.push(`_${key}_ "${escapeString(value)}"`);
-                    break;
+            if (booleanAttrs.has(key)) {
+                props.push(`_${key}_`);
+            } else {
+                props.push(`_${key}_ "${escapeString(value)}"`);
             }
         }
         return props;

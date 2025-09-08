@@ -40,6 +40,9 @@ function htmlToFalco(html) {
         for (const [key, value] of Object.entries(attributes)) {
             if (booleanAttrs.has(key)) {
                 props.push(`_${key}_`);
+            } else if (/^on[a-z]+/.test(key)) {
+                // Explicitly handle event attributes (e.g., onclick, onchange)
+                props.push(`_${key}_ "${escapeString(value)}"`);
             } else {
                 props.push(`_${key}_ "${escapeString(value)}"`);
             }
@@ -77,9 +80,9 @@ function htmlToFalco(html) {
             }
 
             if (children.length > 0) {
-                indentLevel++;         
-                element += ' [';                    
-                element += ' '.repeat(indentLevel * indentSize) + `\n${children.join('\n')} ]`;  
+                indentLevel++;
+                element += ' [';
+                element += ' '.repeat(indentLevel * indentSize) + `\n${children.join('\n')} ]`;
                 indentLevel--;
             } else {
                 element += ' []';

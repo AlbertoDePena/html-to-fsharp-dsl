@@ -72,12 +72,28 @@ function htmlToFalco(html) {
             if (text === '') return '';
             return `_text "${escapeString(text)}"`;
         } else if (node.type === 'script') {
-            let element = `_${node.name}`;
+            let element = "_script";
             const attributes = mapAttributes(node.attribs || {});
-            if (attributes.length > 0) {
-                element += ` [ ${attributes.join('; ')} ] []`;
+            const children = node.children.map(child => {
+                if (child.type === 'text') {
+                    const text = child.data.trim().replace(/"/g, "'");
+                    if (text === '') return '';
+                    return `_text "${text}"`;
+                }
+                return '';
+            }).filter(child => child !== '').map(child => {                                           
+                return ' '.repeat(indentSize) + child;
+            });
+            let scriptContent = '';
+            if (children.length > 0) {
+                scriptContent += `\n${children.join('\n')}`;
             } else {
-                element += ' [] []';
+                scriptContent += '';
+            }
+            if (attributes.length > 0) {
+                element += ` [ ${attributes.join('; ')} ] [ ${scriptContent} ]`;
+            } else {
+                element += ` [] [ ${scriptContent} ]`;
             } 
 
             return element;
@@ -85,7 +101,6 @@ function htmlToFalco(html) {
             let element = `_${node.name}`;
 
             const attributes = mapAttributes(node.attribs || {});
-
             const children = node.children.map(child => processNode(child, indentLevel + 1)).filter(child => child !== '').map(child => {                            
                 indentLevel++;
                 const indentedChild = ' '.repeat((indentLevel + 1) * indentSize) + child;

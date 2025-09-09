@@ -71,6 +71,16 @@ function htmlToFalco(html) {
             const text = node.data.trim();
             if (text === '') return '';
             return `_text "${escapeString(text)}"`;
+        } else if (node.type === 'script') {
+            let element = `_${node.name}`;
+            const attributes = mapAttributes(node.attribs || {});
+            if (attributes.length > 0) {
+                element += ` [ ${attributes.join('; ')} ] []`;
+            } else {
+                element += ' [] []';
+            } 
+
+            return element;
         } else if (node.type === 'tag') {            
             let element = `_${node.name}`;
 
@@ -99,7 +109,7 @@ function htmlToFalco(html) {
             }
 
             return element;
-        }
+        } 
         
         return '';
     }

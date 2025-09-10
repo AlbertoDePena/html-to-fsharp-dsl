@@ -86,14 +86,14 @@ function htmlToFalco(html) {
             });
             let scriptContent = '';
             if (children.length > 0) {
-                scriptContent += `\n${children.join('\n')}`;
+                scriptContent += `[ \n${children.join('\n')} ]`;
             } else {
-                scriptContent += '';
+                scriptContent += '[]';
             }
             if (attributes.length > 0) {
-                element += ` [ ${attributes.join('; ')} ] [ ${scriptContent} ]`;
+                element += ` [ ${attributes.join('; ')} ] ${scriptContent}`;
             } else {
-                element += ` [] [ ${scriptContent} ]`;
+                element += ` [] ${scriptContent}`;
             } 
 
             return element;
@@ -151,5 +151,5 @@ sourceElement.addEventListener('change', evt => {
     if (!targetElement) {
         return;
     }
-    targetElement.innerHTML = htmlToFalco(evt.target.value);
+    targetElement.textContent = htmlToFalco(evt.target.value);
 });

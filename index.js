@@ -1,5 +1,14 @@
 const htmlparser2 = require('htmlparser2');
 
+const booleanAttrs = new Set([
+    'allowfullscreen', 'async', 'autofocus', 'autoplay', 'checked', 'controls', 'default',
+    'defer', 'disabled', 'formnovalidate', 'hidden', 'ismap', 'itemscope', 'loop',
+    'multiple', 'muted', 'nomodule', 'novalidate', 'open', 'readonly', 'required',
+    'reversed', 'selected'
+]);
+
+const selfEnclosingTags = new Set(['link', 'meta', 'input', 'img', 'br', 'hr', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr']);
+
 /**
  * Converts an HTML string to Falco F# DSL.
  * @param {string} html - The HTML markup to convert.
@@ -38,13 +47,6 @@ function htmlToFalco(html) {
      */
     function mapAttributes(attributes) {
         const props = [];
-        // List of boolean attributes per HTML spec and Falco.Markup
-        const booleanAttrs = new Set([
-            'allowfullscreen', 'async', 'autofocus', 'autoplay', 'checked', 'controls', 'default',
-            'defer', 'disabled', 'formnovalidate', 'hidden', 'ismap', 'itemscope', 'loop',
-            'multiple', 'muted', 'nomodule', 'novalidate', 'open', 'readonly', 'required',
-            'reversed', 'selected'
-        ]);
         for (const [key, value] of Object.entries(attributes)) {
             // Convert kebab-case to camelCase for attribute keys with hyphens
             const attrKey = key.includes('-') ? toCamelCase(key) : key;
@@ -81,7 +83,7 @@ function htmlToFalco(html) {
                     return `_text "${text}"`;
                 }
                 return '';
-            }).filter(child => child !== '').map(child => {                                           
+            }).filter(child => child !== '').map(child => {
                 return ' '.repeat(indentSize) + child;
             });
             let scriptContent = '';
@@ -94,15 +96,13 @@ function htmlToFalco(html) {
                 element += ` [ ${attributes.join('; ')} ] ${scriptContent}`;
             } else {
                 element += ` [] ${scriptContent}`;
-            } 
+            }
 
             return element;
-        } else if (node.type === 'tag') {            
+        } else if (node.type === 'tag') {
             let element = `_${node.name}`;
-
-            const selfEnclosingTags = new Set(['link', 'meta', 'input', 'img', 'br', 'hr', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr']);
             const attributes = mapAttributes(node.attribs || {});
-            const children = node.children.map(child => processNode(child, indentLevel + 1)).filter(child => child !== '').map(child => {                            
+            const children = node.children.map(child => processNode(child, indentLevel + 1)).filter(child => child !== '').map(child => {
                 indentLevel++;
                 const indentedChild = ' '.repeat((indentLevel + 1) * indentSize) + child;
                 indentLevel--;
@@ -127,8 +127,8 @@ function htmlToFalco(html) {
             }
 
             return element;
-        } 
-        
+        }
+
         return '';
     }
 

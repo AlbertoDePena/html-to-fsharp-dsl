@@ -100,6 +100,7 @@ function htmlToFalco(html) {
         } else if (node.type === 'tag') {            
             let element = `_${node.name}`;
 
+            const selfEnclosingTags = new Set(['link', 'meta', 'input', 'img', 'br', 'hr', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr']);
             const attributes = mapAttributes(node.attribs || {});
             const children = node.children.map(child => processNode(child, indentLevel + 1)).filter(child => child !== '').map(child => {                            
                 indentLevel++;
@@ -114,7 +115,9 @@ function htmlToFalco(html) {
                 element += ' []';
             }
 
-            if (children.length > 0) {
+            if (selfEnclosingTags.has(node.name)) {
+                return element;
+            } else if (children.length > 0) {
                 indentLevel++;
                 element += ' [';
                 element += ' '.repeat(indentLevel * indentSize) + `\n${children.join('\n')} ]`;

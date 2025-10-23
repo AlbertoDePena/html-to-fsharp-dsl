@@ -10,11 +10,11 @@ const booleanAttrs = new Set([
 const selfEnclosingTags = new Set(['link', 'meta', 'input', 'img', 'br', 'hr', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr']);
 
 /**
- * Converts an HTML string to Falco F# DSL.
+ * Converts an HTML string to F# markup.
  * @param {string} html - The HTML markup to convert.
- * @returns {string} - The generated F# DSL code.
+ * @returns {string} - The generated F# markup code.
  */
-function htmlToFalco(html) {
+function htmlToFSharpMarkup(html) {
     const dom = htmlparser2.parseDocument(html);
     const indentSize = 4;
 
@@ -41,13 +41,25 @@ function htmlToFalco(html) {
     }
 
     /**
-     * Maps HTML attributes to Falco attributes.
+     * Maps HTML attributes to FSharp.Markup attributes.
      * @param {object} attributes
      * @returns {string[]}
      */
-    function mapAttributes(attributes) {
-        const props = [];
-        for (const [key, value] of Object.entries(attributes)) {
+     function mapAttributes(attributes) {
+         const props = [];
+         for (const [key, value] of Object.entries(attributes)) {            
+            // Handle data-* attributes
+            if (key.startsWith('data-')) {
+                const dataKey = key.slice('data-'.length);
+                props.push(`_dataAttr_ "${escapeString(dataKey)}" "${escapeString(value)}"`);
+                continue;
+            }
+            // Handle aria-* attributes
+            if (key.startsWith('aria-')) {
+                const dataKey = key.slice('aria-'.length);
+                props.push(`_ariaAttr_ "${escapeString(dataKey)}" "${escapeString(value)}"`);
+                continue;
+            }
             // Convert kebab-case to camelCase for attribute keys with hyphens
             const attrKey = key.includes('-') ? toCamelCase(key) : key;
             if (booleanAttrs.has(key)) {
@@ -58,9 +70,9 @@ function htmlToFalco(html) {
             } else {
                 props.push(`_${attrKey}_ "${escapeString(value)}"`);
             }
-        }
-        return props;
-    }
+         }
+         return props;
+     }
 
     /**
      * Processes a DOM node and returns its F# representation.
@@ -154,5 +166,5 @@ sourceElement.addEventListener('change', evt => {
     if (!targetElement) {
         return;
     }
-    targetElement.textContent = htmlToFalco(evt.target.value);
+    targetElement.textContent = htmlToFSharpMarkup(evt.target.value);
 });

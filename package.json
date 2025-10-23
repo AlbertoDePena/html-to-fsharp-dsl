@@ -1,8 +1,9 @@
 {
-  "name": "html-to-fsharp-dsl",
+  "name": "html-to-fsharp-html-dsl",
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "clean": "rm -rf dist .parcel-cache",
     "start": "parcel index.html",
     "build": "parcel build index.html"
   },

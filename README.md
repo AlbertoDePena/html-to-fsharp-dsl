@@ -1,8 +1,6 @@
-# HTML to FSharp DSL
+# HTML to FSharp HTML DSL
 
-The goal is to provide implementation for Falco.Markup, Giraffe.ViewEngine, and Feliz.ViewEngine.
-
-Note: this is a POC, for sure not ready for "production".
+Convert HTML to FSharp HTML DSL for Falco.Markup.
 
 ## Local development
 
@@ -11,6 +9,12 @@ Note: this is a POC, for sure not ready for "production".
 npm install
 
 # run app in development mode
+npm run clean
 npm run start
+```
+
+# publish in production mode
+npm run clean
+npm run build
 ```
 

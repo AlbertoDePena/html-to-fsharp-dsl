@@ -11,7 +11,6 @@ npm install
 # run app in development mode
 npm run clean
 npm run start
-```
 
 # publish in production mode
 npm run clean

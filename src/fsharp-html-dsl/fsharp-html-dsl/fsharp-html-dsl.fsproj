@@ -15,7 +15,7 @@
         <Version>1.0.0</Version>
         <Authors>Alberto De Pena</Authors>
         <Company></Company>
-        <Description>Internal F# markup library for HTML/HTMX generation</Description>
+        <Description>F# HTML DSL library for HTML generation</Description>
         <PackageTags>fsharp;markup;html;html-dsl</PackageTags>
         <RepositoryUrl>https://github.com/AlbertoDePena/html-to-fsharp-dsl</RepositoryUrl>
         <RepositoryType>git</RepositoryType>

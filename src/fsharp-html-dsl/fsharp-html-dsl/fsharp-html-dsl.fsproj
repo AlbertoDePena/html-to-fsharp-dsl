@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net8.0</TargetFrameworks>
+        <OutputType>Library</OutputType>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <WarnOn>3395;$(WarnOn)</WarnOn>
+        <WarningLevel>5</WarningLevel>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<AssemblyName>FSharp.Html.Dsl</AssemblyName>
+		<RootNamespace>FSharp.Html.Dsl</RootNamespace>
+
+        <!-- NuGet Package Metadata -->
+        <PackageId>DePena.FSharp.Html.Dsl</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Alberto De Pena</Authors>
+        <Company></Company>
+        <Description>Internal F# markup library for HTML/HTMX generation</Description>
+        <PackageTags>fsharp;markup;html;html-dsl</PackageTags>
+        <RepositoryUrl>https://github.com/AlbertoDePena/html-to-fsharp-dsl</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+
+        <!-- Package generation handled by CI/CD workflows -->
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Update="FSharp.Core" Version="8.0.403" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="XmlNode.fs" />
+        <Compile Include="Attr.fs" />
+        <Compile Include="Elem.fs" />
+        <Compile Include="Text.fs" />
+        <Compile Include="Html.fs" />
+        <Compile Include="Svg.fs" />
+        <Compile Include="Templates.fs" />
+    </ItemGroup>
+
+</Project>

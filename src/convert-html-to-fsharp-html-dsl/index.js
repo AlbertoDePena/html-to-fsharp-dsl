@@ -51,25 +51,29 @@ function htmlToFSharpMarkup(html) {
             // Handle data-* attributes
             if (key.startsWith('data-')) {
                 const dataKey = key.slice('data-'.length);
-                props.push(`_dataAttr_ "${escapeString(dataKey)}" "${escapeString(value)}"`);
+                props.push(`_data_ "${escapeString(dataKey)}" "${escapeString(value)}"`);
                 continue;
             }
             // Handle aria-* attributes
             if (key.startsWith('aria-')) {
                 const dataKey = key.slice('aria-'.length);
-                props.push(`_ariaAttr_ "${escapeString(dataKey)}" "${escapeString(value)}"`);
+                props.push(`_aria_ "${escapeString(dataKey)}" "${escapeString(value)}"`);
                 continue;
             }
             // Convert kebab-case to camelCase for attribute keys with hyphens
             const attrKey = key.includes('-') ? toCamelCase(key) : key;
             if (booleanAttrs.has(key)) {
                 props.push(`_${attrKey}_`);
-            } else if (/^on[a-z]+/.test(key)) {
-                // Explicitly handle event attributes (e.g., onclick, onchange)
+                continue;
+            } 
+            
+            // Explicitly handle event attributes (e.g., onclick, onchange)
+            if (/^on[a-z]+/.test(key)) {                
                 props.push(`_${attrKey}_ "${escapeString(value)}"`);
-            } else {
-                props.push(`_${attrKey}_ "${escapeString(value)}"`);
-            }
+                continue;
+            } 
+                        
+            props.push(`_${attrKey}_ "${escapeString(value)}"`);            
          }
          return props;
      }
@@ -150,7 +154,7 @@ function htmlToFSharpMarkup(html) {
      * @returns {string}
      */
     function processDOM(dom) {
-        return dom.children.map(child => processNode(child, 0)).filter(node => node !== '').join('\n');
+        return dom.children.map(child => processNode(child, -1)).filter(node => node !== '').join('\n');
     }
 
     return processDOM(dom);

@@ -302,3 +302,5 @@ dotnet pack src/fsharp-html-dsl -c Release  # Create package
 # Run benchmarks
 dotnet run --project src/benchmarks/Benchmarks.fsproj -c Release
 ```
+
+Huge thanks to [pimbrouwers](https://github.com/pimbrouwers) for letting me fork and rename this awesome library!

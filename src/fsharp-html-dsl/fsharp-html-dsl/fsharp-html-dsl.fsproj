@@ -28,7 +28,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="README.md" />
         <Compile Include="XmlNode.fs" />
         <Compile Include="Attr.fs" />
         <Compile Include="Elem.fs" />

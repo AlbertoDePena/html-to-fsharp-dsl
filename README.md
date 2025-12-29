@@ -13,6 +13,10 @@ renderHtml doc
 
 `FSharp.Html.Dsl` is an XML markup module that can be used to produce any form of angle-bracket markup (i.e. HTML, SVG, XML etc.).
 
+**Playground**
+
+[convert-html-to-fsharp-html-dsl](https://albertodepena.github.io/convert-html-to-fsharp-html-dsl/)
+
 ## Installation
 
 ### Install the package

@@ -11,7 +11,7 @@
 		<RootNamespace>FSharp.Html.Dsl</RootNamespace>
 
         <!-- NuGet Package Metadata -->
-        <PackageId>DePena.FSharp.Html.Dsl</PackageId>
+        <PackageId>FSharp.Html.Dsl</PackageId>
         <Version>1.0.0</Version>
         <Authors>Alberto De Pena</Authors>
         <Company></Company>
@@ -20,9 +20,7 @@
         <RepositoryUrl>https://github.com/AlbertoDePena/html-to-fsharp-dsl</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-
-        <!-- Package generation handled by CI/CD workflows -->
-        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
 
     <ItemGroup>
@@ -30,6 +28,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <None Include="README.md" />
         <Compile Include="XmlNode.fs" />
         <Compile Include="Attr.fs" />
         <Compile Include="Elem.fs" />
@@ -38,5 +37,7 @@
         <Compile Include="Svg.fs" />
         <Compile Include="Templates.fs" />
     </ItemGroup>
+
+    <ItemGroup />
 
 </Project>

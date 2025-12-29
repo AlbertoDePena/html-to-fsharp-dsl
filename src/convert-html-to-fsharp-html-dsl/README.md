@@ -1,6 +1,4 @@
-# HTML to FSharp HTML DSL
-
-Convert HTML to FSharp HTML DSL for Falco.Markup.
+# Convert HTML to FSharp HTML DSL
 
 ## Local development
 

@@ -28,6 +28,29 @@ module Markup =
         |> List.map elem
         |> Elem.ul [ Attr.id "products" ]
 
+    /// Attribute-heavy rows: the shape that exercises attribute-value
+    /// escaping, which the product template above barely touches.
+    let attrTemplate (values : string list) =
+        let row i value =
+            Elem.tr [ Attr.class' "row"; Attr.data "index" (string i) ] [
+                Elem.td [] [
+                    Elem.input [
+                        Attr.type' "text"
+                        Attr.name (sprintf "field-%i" i)
+                        Attr.value value
+                        Attr.create "hx-get" (sprintf "/rows/%i?q=%s&page=2" i value)
+                        Attr.create "aria-label" value ] ] ]
+
+        values
+        |> List.mapi row
+        |> Elem.table [ Attr.id "rows" ]
+
+    /// No character needs an entity - the path that should not allocate.
+    let cleanValues = [ for i in 1..50 -> sprintf "product-name-%i" i ]
+
+    /// Every value needs escaping.
+    let dirtyValues = [ for i in 1..50 -> sprintf "a \"quoted\" & <escaped> value %i" i ]
+
     [<MemoryDiagnoser>]
     type RenderBench() =
 
@@ -35,6 +58,18 @@ module Markup =
         member _.Falco() =
             products
             |> falcoTemplate
+            |> renderNode
+
+        [<Benchmark>]
+        member _.AttributesNoEscaping() =
+            cleanValues
+            |> attrTemplate
+            |> renderNode
+
+        [<Benchmark>]
+        member _.AttributesWithEscaping() =
+            dirtyValues
+            |> attrTemplate
             |> renderNode
 
 [<EntryPoint>]

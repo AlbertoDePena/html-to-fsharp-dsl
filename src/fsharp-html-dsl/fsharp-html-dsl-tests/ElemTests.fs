@@ -98,8 +98,11 @@ module Elem =
 
     [<Fact>]
     let ``Should create valid html button`` () =
+        // The quotes in the handler are escaped so they cannot terminate the
+        // attribute. The HTML parser decodes them before the JS engine sees the
+        // handler, so the script itself is unchanged.
         let doc = _button [ _onclick_ """console.log("test")""" ] [ _text "click me" ]
-        renderNode doc |> should equal """<button onclick="console.log("test")">click me</button>""";
+        renderNode doc |> should equal """<button onclick="console.log(&quot;test&quot;)">click me</button>""";
 
     [<Fact>]
     let ``Should produce valid xml doc`` () =

@@ -5,9 +5,17 @@ open System.Collections.Generic
 
 [<RequireQualifiedAccess>]
 module Attr =
-    /// XmlAttribute KeyValueAttr constructor
+    /// XmlAttribute KeyValueAttr constructor. The value is HTML-escaped when
+    /// rendered, so it is safe for user input.
     let create (key : string) (value : string) =
         KeyValueAttr (key, value)
+
+    /// XmlAttribute RawKeyValueAttr constructor. The value is rendered
+    /// verbatim - use only for values that are already escaped or that must
+    /// contain raw markup. The `Attr.create`/`Attr.createRaw` pair mirrors
+    /// `Text.enc`/`Text.raw`.
+    let createRaw (key : string) (value : string) =
+        RawKeyValueAttr (key, value)
 
     /// XmlAttribute NonValueAttr constructor
     let createBool (key : string) =
@@ -19,41 +27,68 @@ module Attr =
             "style", "; "
             "accept", ", " ]
 
+    /// A merged attribute: its value (None for valueless attributes) and
+    /// whether that value must be rendered verbatim.
+    type private MergedValue =
+        { Value : string option
+          IsRaw : bool }
+
     /// Merge two XmlAttribute lists
     let merge (attrs1 : XmlAttribute list) (attrs2 : XmlAttribute list) =
 
-        let joinValues (sep : string) v2 v1 = String.Concat([| v1; sep; v2 |])
+        // An escaped half and a raw half cannot share one value, so when an
+        // additive merge mixes them, escape the escaped half up front and
+        // render the join verbatim.
+        let joinValues (sep : string) (existing : MergedValue) (isRaw : bool) (value : string) =
+            match existing.Value with
+            | None ->
+                // Pre-existing behaviour: a valueless attribute on the left
+                // stays valueless and the incoming value is dropped.
+                existing
+            | Some existingValue when existing.IsRaw = isRaw ->
+                { Value = Some (String.Concat [| existingValue; sep; value |]); IsRaw = isRaw }
+            | Some existingValue ->
+                let encode raw v = if raw then v else HtmlEncoding.encodeAttributeValue v
+                let joined = String.Concat [| encode existing.IsRaw existingValue; sep; encode isRaw value |]
+                { Value = Some joined; IsRaw = true }
+
+        let readAttr attr =
+            match attr with
+            | NonValueAttr name             -> name, { Value = None;       IsRaw = false }
+            | KeyValueAttr (name, value)    -> name, { Value = Some value; IsRaw = false }
+            | RawKeyValueAttr (name, value) -> name, { Value = Some value; IsRaw = true }
 
         // convert left list into dictionary
-        let merged = Dictionary<string, string option>()
+        let merged = Dictionary<string, MergedValue>()
 
         for attr in attrs1 do
-            match attr with
-            | NonValueAttr name          -> merged.Add(name, None)
-            | KeyValueAttr (name, value) -> merged.Add(name, Some value)
+            let name, attrValue = readAttr attr
+            merged.Add(name, attrValue)
 
         // check right list against dictionary, updating as appropriate
         for attr in attrs2 do
-            match attr with
-            | NonValueAttr name ->
+            let name, incoming = readAttr attr
+            match incoming.Value with
+            | None ->
                 if not (merged.ContainsKey name) then
-                    merged.Add(name, None)
+                    merged.Add(name, incoming)
 
-            | KeyValueAttr (name, value) ->
+            | Some value ->
                 if merged.ContainsKey(name) && additiveAttributes.ContainsKey(name) then
-                    let newValue = Option.map (joinValues additiveAttributes[name] value) merged[name]
-                    merged[name] <- newValue
+                    merged[name] <- joinValues additiveAttributes[name] merged[name] incoming.IsRaw value
                 elif merged.ContainsKey(name) then
-                    merged[name] <- Some value
+                    merged[name] <- incoming
                 else
-                    merged.Add(name, Some value)
+                    merged.Add(name, incoming)
 
         // inputs are now merged, convert dictionary back into of XmlAttribute
         [
-            for KeyValue (name, values) in merged do
-                match values with
+            for KeyValue (name, attrValue) in merged do
+                match attrValue.Value with
                 | None ->
                     NonValueAttr name
+                | Some value when attrValue.IsRaw ->
+                    RawKeyValueAttr (name, value)
                 | Some value ->
                     KeyValueAttr (name, value)
         ]
@@ -446,23 +481,23 @@ module Attr =
     /// `onabort={value}` event
     let onabort = create "onabort"
 
-    /// `afterprint={value}` event
-    let onafterprint = create "afterprint"
+    /// `onafterprint={value}` event
+    let onafterprint = create "onafterprint"
 
-    /// `animationend={value}` event
-    let onanimationend = create "animationend"
+    /// `onanimationend={value}` event
+    let onanimationend = create "onanimationend"
 
-    /// `animationiteration={value}` event
-    let onanimationiteration = create "animationiteration"
+    /// `onanimationiteration={value}` event
+    let onanimationiteration = create "onanimationiteration"
 
-    /// `animationstart={value}` event
-    let onanimationstart = create "animationstart"
+    /// `onanimationstart={value}` event
+    let onanimationstart = create "onanimationstart"
 
-    /// `beforeprint={value}` event
-    let onbeforeprint = create "beforeprint"
+    /// `onbeforeprint={value}` event
+    let onbeforeprint = create "onbeforeprint"
 
-    /// `beforeunload={value}` event
-    let onbeforeunload = create "beforeunload"
+    /// `onbeforeunload={value}` event
+    let onbeforeunload = create "onbeforeunload"
 
     /// `onblur={value}` event
     let onblur = create "onblur"
@@ -482,11 +517,11 @@ module Attr =
     /// `oncontextmenu={value}` event
     let oncontextmenu = create "oncontextmenu"
 
-    /// `copy={value}` event
-    let oncopy = create "copy"
+    /// `oncopy={value}` event
+    let oncopy = create "oncopy"
 
-    /// `cut={value}` event
-    let oncut = create "cut"
+    /// `oncut={value}` event
+    let oncut = create "oncut"
 
     /// `ondblclick={value}` event
     let ondblclick = create "ondblclick"
@@ -533,20 +568,20 @@ module Attr =
     /// `onforminput={value}` event
     let onforminput = create "onforminput"
 
-    /// `focusin={value}` event
-    let onfocusin = create "focusin"
+    /// `onfocusin={value}` event
+    let onfocusin = create "onfocusin"
 
-    /// `focusout={value}` event
-    let onfocusout = create "focusout"
+    /// `onfocusout={value}` event
+    let onfocusout = create "onfocusout"
 
-    /// `fullscreenchange={value}` event
-    let onfullscreenchange = create "fullscreenchange"
+    /// `onfullscreenchange={value}` event
+    let onfullscreenchange = create "onfullscreenchange"
 
-    /// `fullscreenerror={value}` event
-    let onfullscreenerror = create "fullscreenerror"
+    /// `onfullscreenerror={value}` event
+    let onfullscreenerror = create "onfullscreenerror"
 
-    /// `hashchange={value}` event
-    let onhashchange = create "hashchange"
+    /// `onhashchange={value}` event
+    let onhashchange = create "onhashchange"
 
     /// `oninput={value}` event
     let oninput = create "oninput"
@@ -575,8 +610,8 @@ module Attr =
     /// `onloadstart={value}` event
     let onloadstart = create "onloadstart"
 
-    /// `message={value}` event
-    let onmessage = create "message"
+    /// `onmessage={value}` event
+    let onmessage = create "onmessage"
 
     /// `onmousedown={value}` event
     let onmousedown = create "onmousedown"
@@ -602,23 +637,23 @@ module Attr =
     /// `onmousewheel={value}` event
     let onmousewheel = create "onmousewheel"
 
-    /// `offline={value}` event
-    let onoffline = create "offline"
+    /// `onoffline={value}` event
+    let onoffline = create "onoffline"
 
-    /// `online={value}` event
-    let ononline = create "online"
+    /// `ononline={value}` event
+    let ononline = create "ononline"
 
-    /// `open={value}` event
-    let onopen = create "open"
+    /// `onopen={value}` event
+    let onopen = create "onopen"
 
-    /// `pagehide={value}` event
-    let onpagehide = create "pagehide"
+    /// `onpagehide={value}` event
+    let onpagehide = create "onpagehide"
 
-    /// `pageshow={value}` event
-    let onpageshow = create "pageshow"
+    /// `onpageshow={value}` event
+    let onpageshow = create "onpageshow"
 
-    /// `paste={value}` event
-    let onpaste = create "paste"
+    /// `onpaste={value}` event
+    let onpaste = create "onpaste"
 
     /// `onpause={value}` event
     let onpause = create "onpause"
@@ -629,8 +664,8 @@ module Attr =
     /// `onplaying={value}` event
     let onplaying = create "onplaying"
 
-    /// `popstate={value}` event
-    let onpopstate = create "popstate"
+    /// `onpopstate={value}` event
+    let onpopstate = create "onpopstate"
 
     /// `onprogress={value}` event
     let onprogress = create "onprogress"
@@ -647,8 +682,8 @@ module Attr =
     /// `onscroll={value}` event
     let onscroll = create "onscroll"
 
-    /// `search={value}` event
-    let onsearch = create "search"
+    /// `onsearch={value}` event
+    let onsearch = create "onsearch"
 
     /// `onseeked={value}` event
     let onseeked = create "onseeked"
@@ -665,8 +700,8 @@ module Attr =
     /// `onstalled={value}` event
     let onstalled = create "onstalled"
 
-    /// `storage={value}` event
-    let onstorage = create "storage"
+    /// `onstorage={value}` event
+    let onstorage = create "onstorage"
 
     /// `onsubmit={value}` event
     let onsubmit = create "onsubmit"
@@ -677,26 +712,26 @@ module Attr =
     /// `ontimeupdate={value}` event
     let ontimeupdate = create "ontimeupdate"
 
-    /// `toggle={value}` event
-    let ontoggle = create "toggle"
+    /// `ontoggle={value}` event
+    let ontoggle = create "ontoggle"
 
-    /// `touchcancel={value}` event
-    let ontouchcancel = create "touchcancel"
+    /// `ontouchcancel={value}` event
+    let ontouchcancel = create "ontouchcancel"
 
-    /// `touchend={value}` event
-    let ontouchend = create "touchend"
+    /// `ontouchend={value}` event
+    let ontouchend = create "ontouchend"
 
-    /// `touchmove={value}` event
-    let ontouchmove = create "touchmove"
+    /// `ontouchmove={value}` event
+    let ontouchmove = create "ontouchmove"
 
-    /// `touchstart={value}` event
-    let ontouchstart = create "touchstart"
+    /// `ontouchstart={value}` event
+    let ontouchstart = create "ontouchstart"
 
-    /// `transitionend={value}` event
-    let ontransitionend = create "transitionend"
+    /// `ontransitionend={value}` event
+    let ontransitionend = create "ontransitionend"
 
-    /// `unload={value}` event
-    let onunload = create "unload"
+    /// `onunload={value}` event
+    let onunload = create "onunload"
 
     /// `onvolumechange={value}` event
     let onvolumechange = create "onvolumechange"
@@ -704,5 +739,5 @@ module Attr =
     /// `onwaiting={value}` event
     let onwaiting = create "onwaiting"
 
-    /// `wheel={value}` event
-    let onwheel = create "wheel"
+    /// `onwheel={value}` event
+    let onwheel = create "onwheel"

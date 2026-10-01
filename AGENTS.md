@@ -43,6 +43,7 @@ npm run clean # Clean build artifacts
 ### F# Projects
 - `src/fsharp-html-dsl/fsharp-html-dsl/` - Main library
 - `src/fsharp-html-dsl/fsharp-html-dsl-tests/` - Test suite
+- `src/fsharp-html-dsl/fsharp-html-dsl-browser-tests/` - Playwright tests against headless Chromium (downloads Chromium on first run, skips if unavailable)
 - `src/fsharp-html-dsl/benchmarks/` - Performance benchmarks
 
 ### Frontend Project
@@ -203,6 +204,9 @@ module CustomAttr =
 
 ## Security Notes
 
-- HTML encoding is handled by `Text.enc` for user input
-- Be careful with raw text insertion - use encoded text when appropriate
-- Validate attribute values when they come from external sources
+- Text nodes: `Text.raw`/`_text` is verbatim, `Text.enc`/`_textEnc` encodes. Use the encoded form for user input
+- Attribute values: escaped by default. `Attr.create` and every named `Attr.*`/`_name_` function produce `KeyValueAttr`, which `XmlNodeSerializer` escapes on the way out via `HtmlEncoding.writeAttributeValue`
+- `Attr.createRaw` (`RawKeyValueAttr`) opts out of that escaping. Only for values that are already escaped or must contain raw markup - escaping is single pass, so routing pre-escaped input through `Attr.create` double-encodes it
+- Attribute **names** are still rendered verbatim. Never build a key from user input
+- Escaping stops a value from breaking out of its attribute. It does not sanitize the value's own language, so `href="javascript:..."`, `style`, `on*` handlers and client-side-interpreted attributes (`hx-vals`, `hx-headers`) still need caller-side validation
+- `fsharp-html-dsl-browser-tests` asserts this behaviour in headless Chromium; `AttrEncodingTests.fs` asserts the rendered strings

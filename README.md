@@ -88,7 +88,7 @@ let markup =
     ]
 ```
 
-Attributes contain two subtypes as well, `KeyValueAttr` which represent key/value attributes or `NonValueAttr` which represent boolean attributes.
+Attributes contain three subtypes as well: `KeyValueAttr` for key/value attributes, `RawKeyValueAttr` for key/value attributes whose value must be rendered verbatim (see [Escaping](#escaping)) and `NonValueAttr` for boolean attributes.
 
 ```fsharp
 let markup =
@@ -101,6 +101,42 @@ Most [JavaScript Events](https://developer.mozilla.org/en-US/docs/Web/Events) ha
 let markup =
     _button [ _onclick_ "console.log(\"hello world\")" ] [ _text "Click me" ]
 ```
+
+## Escaping
+
+**Attribute values are HTML-escaped by default.** Every `Attr.*` / `_name_` attribute function escapes `&`, `"`, `'`, `<` and `>` on the way out, so a value taken from a query string, a form post or a database row cannot terminate its own attribute:
+
+```fsharp
+// A value that would otherwise close `value="` and open a live event handler
+_input [ _value_ "\" onfocus=\"alert(1)" ]
+
+// <input value="&quot; onfocus=&quot;alert(1)" />
+```
+
+Escaping is lossless. The HTML parser decodes the entities before anything reads the attribute, so `el.getAttribute("value")` returns the original string and an inline handler still runs exactly as written. Characters outside ASCII are left alone, so UTF-8 documents stay UTF-8 rather than expanding into numeric entities.
+
+Text nodes are the other half of the story and work the other way around: `_text` is raw, `_textEnc` encodes. Use `_textEnc` for any text that came from outside your program.
+
+| Source | Attributes | Text nodes |
+|--------|-----------|------------|
+| User input, query strings, database rows | `_value_ v` (escapes) | `_textEnc v` (encodes) |
+| Literals and markup you control | `_value_ v` (escaping is a no-op) | `_text v` (raw) |
+| Already-escaped values | `Attr.createRaw "value" v` | `Text.raw v` |
+
+### Opting out
+
+`Attr.createRaw` renders its value verbatim, mirroring `Text.raw`. Use it only for values that are already escaped, or that must contain raw markup — the escaping is single-pass, so feeding it pre-escaped input through `Attr.create` would double-encode it:
+
+```fsharp
+let encoded = HtmlEncoding.encodeAttributeValue someValue
+
+_a [ Attr.createRaw "href" encoded ] [ _text "link" ]
+```
+
+### What escaping does not cover
+
+- **Attribute *names* are rendered verbatim.** Only values are escaped, so an attribute name must never come from user input — `Attr.create userInput v` can still inject a new attribute.
+- **Escaping is not sanitization of the value's own language.** The parser hands the decoded value to whoever consumes it, so `href="javascript:…"`, a `style` value, an `on*` handler, or an attribute read by a client-side library (`hx-vals`, `hx-headers`) is still whatever the input said. Escaping stops the value from escaping its attribute; validating what belongs in that attribute — a URL scheme allow-list, for instance — is still the caller's job.
 
 ## HTML
 
@@ -290,6 +326,17 @@ Intel Core i7-7500U CPU 2.70GHz (Kaby Lake), 1 CPU, 4 logical and 2 physical cor
 |        FSharp |  3.829 us | 0.0338 us | 0.0300 us |  1.58 |    0.04 |  8.1253 |     17 KB |
 ```
 
+### Cost of attribute escaping
+
+Added in 2.0.0, measured over a 50-row table with 5 attributes per row (250 attribute values per render), Apple M-series / .NET 8:
+
+| Case | 1.0.0 | 2.0.0 |
+|------|------:|------:|
+| No value needs escaping | 17.11 us | 18.29 us |
+| Every value needs escaping | 17.99 us | 26.38 us |
+
+The scan uses a vectorised `SearchValues.IndexOfAny`, and the runs between entities are written to the output as spans, so a value needing no escaping costs roughly 5ns and allocates nothing. Values that do need escaping pay for the longer output they produce.
+
 ## Development
 
 ### Building Locally
@@ -306,5 +353,7 @@ dotnet pack src/fsharp-html-dsl -c Release  # Create package
 # Run benchmarks
 dotnet run --project src/benchmarks/Benchmarks.fsproj -c Release
 ```
+
+The solution also contains `fsharp-html-dsl-browser-tests`, which drives the rendered markup through headless Chromium with [Playwright](https://playwright.dev/dotnet/) to verify the escaping behaviour end to end. It downloads Chromium on first run, and skips with a reason if that download is unavailable.
 
 Huge thanks to [pimbrouwers](https://github.com/pimbrouwers) for letting me fork and rename this awesome library!

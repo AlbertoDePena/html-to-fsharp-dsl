@@ -6,3 +6,6 @@ bin
 obj
 .fake
 BenchmarkDotNet.Artifacts
+.idea
+TestResults
+.DS_Store

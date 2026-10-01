@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
@@ -19,16 +19,14 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="Xunit.SkippableFact" Version="1.4.13" />
         <PackageReference Include="FsUnit.xUnit" Version="6.0.0" />
+        <PackageReference Include="Microsoft.Playwright" Version="1.49.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="ElemTests.fs" />
-        <Compile Include="TextTests.fs" />
-        <Compile Include="AttrEncodingTests.fs" />
-        <Compile Include="EventAttrTests.fs" />
-        <Compile Include="HtmlTests.fs" />
-        <Compile Include="SvgTests.fs" />
+        <Compile Include="BrowserFixture.fs" />
+        <Compile Include="AttrEncodingBrowserTests.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 

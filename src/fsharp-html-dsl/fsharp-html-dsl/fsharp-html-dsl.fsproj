@@ -12,7 +12,8 @@
 
         <!-- NuGet Package Metadata -->
         <PackageId>FSharp.Html.Dsl</PackageId>
-        <Version>1.0.0</Version>
+        <Version>2.0.0</Version>
+        <PackageReleaseNotes>Attribute values are now HTML-escaped when rendered (use Attr.createRaw to opt out). Fixes 31 Attr.on* helpers that rendered their attribute name without the "on" prefix.</PackageReleaseNotes>
         <Authors>Alberto De Pena</Authors>
         <Company></Company>
         <Description>F# HTML DSL library for HTML generation</Description>
